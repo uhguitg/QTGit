@@ -33,5 +33,4 @@ HEADERS += \
 FORMS += \
         mainwindow.ui
 
-DISTFILES += \
-    LEMALL2017-05-16.csv
+DISTFILES +=

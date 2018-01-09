@@ -6,6 +6,8 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    over=0;
+    i=1;
     manager = new QNetworkAccessManager(this);
     connect(manager,SIGNAL(finished(QNetworkReply*)),this,SLOT(my_slots(QNetworkReply*)));
     req.setUrl(QUrl("https://aip.baidubce.com/rpc/2.0/nlp/v1/sentiment_classify?access_token=24.c31c6a1a9384089690f49673bc8b37c9.2592000.1517642051.282335-10624746"));
@@ -48,31 +50,40 @@ void MainWindow::on_pushButton_clicked()
     if(!file1->open(QFile::WriteOnly | QFile::Append)) {
            qDebug()<<"Can't open the file1!"<<endl;
     }
-    QTextStream txtInput(file);
-    QByteArray lineStr;
-    while(!txtInput.atEnd()){
-        lineStr=file->readAll();
-        str = QString::fromLocal8Bit(lineStr);
-        list1 = str.split('"');
-    }
-    i=1;
+    txtInput=new QTextStream(file);
     this->fun1();
 }
 
+void MainWindow::fun(){
+    QByteArray lineStr;
+    lineStr=file->read(4096);
+    if(list1.size()%6==1 || i==1){
+        str = QString::fromLocal8Bit(lineStr);
+    }else{
+        str = QString("\"%1%2").arg(str.section("\"\"",-1,-1)).arg(QString::fromLocal8Bit(lineStr));
+    }
+    qDebug()<<str;
+    list1 = str.split('"');
+    i=1;
+    if(txtInput->atEnd()){
+        qDebug()<<"---------------------------------";
+        over=1;
+    }
+    return;
+}
 void MainWindow::fun1(){
-    qDebug()<<list1.size()<<"   i="<<i;
-    if(i>=list1.size()){
-        file->close();
-        file1->close();
+    if(over==1){
         return;
     }
-    str1 = list1.at(i);
-    i+=2;
-    str2 = list1.at(i);
-    i+=2;
-    str3 = list1.at(i);
-    i+=2;
-    list2 = str3.split(':');
+    if(list1.size()-i<6){
+        fun();
+        qDebug()<<list1.size()<<"   i="<<i;
+    }
+    for(int m=0;m<3;m++){
+        str1[m] = list1.at(i);
+        i+=2;
+    }
+    list2 = str1[2].split(':');
     j=0;
     this->fun2();
 }
@@ -89,5 +100,5 @@ void MainWindow::fun2(){
     QString string=QString("{\"text\":\"%1\"}").arg(ss2);
     QByteArray ba1=string.toLocal8Bit();
     manager->post(req, ba1);
-    string1=QString("%1     %2      %3      %4     %5\r\n").arg(str1).arg(str2).arg(j).arg(ss1).arg(ss2);
+    string1=QString("%1     %2      %3      %4     %5\r\n").arg(str1[0]).arg(str1[1]).arg(j).arg(ss1).arg(ss2);
 }
