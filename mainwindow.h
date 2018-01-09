@@ -28,6 +28,7 @@ private slots:
 
 private:
     int i,j;
+    //////
     //int
     //int over;       //结束标志
     QString str;    //聊天文件内容
